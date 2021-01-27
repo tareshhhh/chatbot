@@ -1,0 +1,177 @@
+#install package NLTK
+pip install nltk
+
+#instal package newspaper3k
+pip install newspaper3k
+
+#Import libraries
+from newspaper import Article
+import random
+import string
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+import nltk
+import numpy as np
+import warnings
+#ignore  any warning messages
+warnings.filterwarnings('ignore')
+#download the packages from NLTK
+nltk.download('punkt', quiet=True)
+nltk.download('wordnet', quiet=True)
+
+#get the article url
+article= Article('https://www.space.com/15421-black-holes-facts-formation-discovery-sdcmp.html')
+article.download()
+article.parse()
+article.nlp()
+corpus = article.text 
+
+#print the corpus/text
+print(corpus)
+
+#Tokenisation
+
+text = corpus
+#convert the text into a list of sentences
+sent_tokens = nltk.sent_tokenize(text)           
+#print the list of sentences
+print(sent_tokens)
+
+#create a dictionary {key:value} to remove punctuators, ord is used to get the numbers of punct
+remove_punct_dict = dict( ( ord( punct),None ) for punct in string.punctuation)
+
+#print the punctuatuons
+print(string.punctuation)
+
+#print the dictionary
+print(remove_punct_dict)
+#create a function to retuen a list of the lemmatized lower case words after removing the punctuators
+def lemNormalize(text):
+  return nltk.word_tokenize(text.lower().translate(remove_punct_dict))       #to remove the some left punctuators{.translate() is used} 
+
+#print the  tokenized text
+print(lemNormalize(text)) 
+
+#keyword matching
+
+#greeting input
+
+
+GREETING_INPUTS = ["hello",
+    "hi there!",
+    "wassup",
+    "namaste",
+    "hello",
+    "hey"]
+
+#greeting response
+
+GREETING_RESPONSES = ["howdy","hi","heyyy","hey there","hello","hola"]
+
+
+#create a function to return random greeting response
+def greeting(sentence):
+  #if the user's input us ggreeting then return a randomly choosen greeting response
+  for word in sentence.split():
+    if word.lower() in GREETING_INPUTS:
+      return random.choice(GREETING_RESPONSES)
+	  
+#generate the response
+def response(user_response):
+
+
+  #user's response / query ............... bit machine learning aspect
+
+
+  #user_response = 'what is black hole'
+
+  #making the user response lower case
+
+  user_response = user_response.lower()
+
+  ###print the users response / query
+  #print(user_response)
+
+  #set the response of the bot in string
+
+  nirvana_response = ''
+
+  #append the users response to the ssentence list
+
+  sent_tokens.append(user_response)
+
+  #print the sentense list after appending the users response 
+
+  #print(sent_tokens)
+
+
+  #create a TFIDFvectorizer object
+  TfidfVec =  TfidfVectorizer(tokenizer = lemNormalize,stop_words='english')
+
+  #convert the text into a matrix of TF-IDF features
+
+  tfidf = TfidfVec.fit_transform(sent_tokens)
+
+  #print the TFIDF features
+
+  #print(tfidf)
+
+  #get the easure of the similarity score (similaruty score)
+
+  vals = cosine_similarity(tfidf[-1],tfidf)
+ 
+  #print the similarity scores 
+  #print(vals)
+
+  #get the index of the most similar sentense/ text  to the users response
+
+  idx = vals.argsort()[0][-2]    #to get to the very second similar sentence we've used [-2] 
+
+  #Reduce the dimesionality of the vals
+
+  flat = vals.flatten()     #since vals is the list of ,list so making a new one list 
+
+
+  #sort the lis into asencending order 
+
+  flat.sort()
+
+  #get the most similar  score ti the users response
+
+  score = flat[-2]
+
+  #print the similarity score
+
+  #print(score)
+
+  #if the variable score is 0 then their is no text similar to the users response
+
+  if (score == 0):
+    nirvana_response = nirvana_response + "I apologies , I don't understand." 
+  else:
+    nirvana_response = nirvana_response + sent_tokens[idx]
+
+  #print the chatbot response
+  #print(sent_tokens[idx])
+  #remove the users response from the sentensetokens list
+  sent_tokens.remove(user_response)
+  return nirvana_response
+
+flag = True
+print("BLACKBot: I am STEPHEN HAWKINGS. I will answer your all queries. If you want to exit, type 'Bye' ")
+while (flag==True):
+  user_response = input( ) 
+  user_response = user_response.lower( )
+  if (user_response != 'bye'):
+    if (user_response== "thanks" or user_response == "thank you"):
+      flag =  False
+      print('BLACKBot ; You are welcome!')
+    else:
+      if(greeting(user_response) != None) :
+        print("BLACKBot:"+ greeting(user_response))
+      else:
+        print("BLACKBot:"+response(user_response))
+        
+  else :
+    flag = False
+    print("BLACKBot : Chat with you later")
